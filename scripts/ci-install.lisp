@@ -1,4 +1,5 @@
 ;;;; Phase 1: install SUT dependency closure via cl-repository-client.
+;;;; No Quicklisp — OCI only (egao1980/cl-systems).
 
 (setf *debugger-hook*
       (lambda (c h)
