@@ -1,6 +1,6 @@
 (defsystem "rpc-protocol-grpc"
-  :version "0.1.0"
-  :description "gRPC binding for rpc-protocol (rpc-transport over grpc-protocol)"
+  :version "0.1.1"
+  :description "gRPC binding for rpc-protocol (unary + call-stream/bidi over grpc-protocol)"
   :author "egao1980"
   :license "MIT"
   :depends-on ("rpc-protocol" "grpc-protocol")

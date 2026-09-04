@@ -10,7 +10,7 @@ Wire backends stay where they are (`grpc-backend-http2`, `grpc-backend-native`).
 | `:notify` | `rpc-notify` | unary, reply dropped |
 | `:call-stream` | `rpc-call-stream` | server stream |
 | `:client-stream` | `rpc-client-stream` | client stream |
-| `:bidi-stream` | `rpc-bidi-stream` | bidi |
+| `:bidi-stream` | `rpc-bidi-stream` | bidi (`grpc-backend-http2` **0.2.0+** flush-on-first-recv) |
 
 ```lisp
 (asdf:load-system "grpc-backend-http2")   ; or grpc-backend-native
