@@ -23,6 +23,19 @@ Wire backends stay where they are (`grpc-backend-http2`, `grpc-backend-native`).
     (rpc-protocol:rpc-close tr)))
 ```
 
+Serve (unary, TLS via the loaded gRPC backend):
+
+```lisp
+(let ((tr (rpc-protocol-grpc:grpc-rpc-listen
+           :host "127.0.0.1" :port 8443
+           :credentials (list :ssl :cert #p"cert.pem" :key #p"key.pem"))))
+  (rpc-protocol:rpc-serve
+   (lambda (method params)
+     (declare (ignore method))
+     params)
+   :transport tr))
+```
+
 JSON-RPC is a different repo: [`rpc-protocol-json`](https://github.com/egao1980/rpc-protocol-json).
 
 ## License

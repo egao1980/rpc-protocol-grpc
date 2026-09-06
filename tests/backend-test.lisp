@@ -92,9 +92,42 @@
           (ok (eq 'yo (rpc-protocol:rpc-send s 'yo)))
           (rpc-protocol:rpc-close s))))))
 
-(deftest serve-unimplemented
+(defclass mock-server (grpc-protocol:grpc-server)
+  ((handlers :initarg :handlers :accessor mock-server-handlers)))
+
+(defmethod grpc-protocol:backend-grpc-serve ((backend mock-backend) handlers
+                                             &key host port credentials metadata)
+  (declare (ignore metadata))
+  (let ((s (make-instance 'mock-server
+                          :backend backend
+                          :host (or host "127.0.0.1")
+                          :port (or port 0)
+                          :credentials credentials
+                          :handlers handlers)))
+    (setf (grpc-protocol:grpc-server-running-p s) t)
+    s))
+
+(deftest serve-starts-and-stops
   (with-mock
     (lambda ()
-      (let ((tr (rpc-protocol-grpc:grpc-rpc-connect "localhost:1")))
-        (ok (signals (rpc-protocol:rpc-serve #'identity :transport tr)
-                     'rpc-protocol:rpc-error))))))
+      (let* ((tr (rpc-protocol-grpc:grpc-rpc-listen
+                  :host "127.0.0.1" :port 8443
+                  :credentials '(:ssl :cert "c" :key "k")))
+             (stop (rpc-protocol:rpc-serve
+                    (lambda (method params)
+                      (declare (ignore method))
+                      params)
+                    :transport tr)))
+        (ok (functionp stop))
+        (funcall stop)))))
+
+(deftest listen-target
+  (with-mock
+    (lambda ()
+      (let ((tr (rpc-protocol-grpc:grpc-rpc-listen
+                 :host "127.0.0.1" :port 9
+                 :credentials :ssl)))
+        (ok (typep tr 'rpc-protocol-grpc:grpc-rpc-transport))
+        (ok (equal "127.0.0.1:9"
+                   (grpc-protocol:grpc-channel-target
+                    (rpc-protocol-grpc:grpc-rpc-channel tr))))))))

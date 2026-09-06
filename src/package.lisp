@@ -6,6 +6,7 @@
            #:grpc-rpc-channel
            #:grpc-rpc-stream-inner
            #:grpc-rpc-connect
+           #:grpc-rpc-listen
            #:use-grpc-rpc-transport))
 
 (in-package #:rpc-protocol-grpc)
