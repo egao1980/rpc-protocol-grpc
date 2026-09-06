@@ -1,9 +1,9 @@
 (defsystem "rpc-protocol-grpc"
-  :version "0.1.1"
-  :description "gRPC binding for rpc-protocol (unary + call-stream/bidi over grpc-protocol)"
+  :version "0.2.0"
+  :description "gRPC binding for rpc-protocol (unary + streams + serve over grpc-protocol)"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("rpc-protocol" "grpc-protocol")
+  :depends-on ("rpc-protocol" (:version "grpc-protocol" "0.2.0"))
   :properties (:cl-repo (:ci (:with ("dissect"))))
   :serial t
   :pathname "src"

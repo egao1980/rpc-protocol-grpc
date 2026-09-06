@@ -42,11 +42,51 @@
   (rpc-protocol:backend-rpc-call transport method params)
   t)
 
+(defun %parse-target (target)
+  (let* ((s (or target ""))
+         (cut (max (or (search "://" s) -3) 0))
+         (hostport (if (plusp cut) (subseq s (+ cut 3)) s))
+         (hostport (string-right-trim "/" hostport))
+         (colon (position #\: hostport :from-end t)))
+    (if (and colon (every #'digit-char-p (subseq hostport (1+ colon))))
+        (values (subseq hostport 0 colon)
+                (parse-integer (subseq hostport (1+ colon))))
+        (values hostport nil))))
+
+(defun grpc-rpc-listen (&key (host "127.0.0.1") port credentials metadata
+                         (backend grpc-protocol:*grpc-backend*))
+  "Server-side transport. Does not open a client channel."
+  (make-instance 'grpc-rpc-transport
+                 :channel (make-instance 'grpc-protocol:grpc-channel
+                                         :target (format nil "~A:~A" host (or port 0))
+                                         :backend backend
+                                         :credentials credentials
+                                         :metadata metadata)))
+
+(defun %unary-handlers (handler)
+  (lambda (method)
+    (grpc-protocol:make-grpc-method-handler
+     method
+     (lambda (request stream)
+       (declare (ignore stream))
+       (funcall handler method request))
+     :kind :unary)))
+
 (defmethod rpc-protocol:backend-rpc-serve ((transport grpc-rpc-transport) handler &key)
-  (declare (ignore handler))
-  (error 'rpc-protocol:rpc-error
-         :message "gRPC server serve is not implemented on rpc-protocol-grpc"
-         :code rpc-protocol:+internal-error+))
+  (let* ((ch (grpc-rpc-channel transport))
+         (meta (grpc-protocol:grpc-channel-metadata ch)))
+    (multiple-value-bind (host port)
+        (%parse-target (grpc-protocol:grpc-channel-target ch))
+      (let ((server (grpc-protocol:grpc-serve
+                     (%unary-handlers handler)
+                     :host (or host "127.0.0.1")
+                     :port port
+                     :credentials (grpc-protocol:grpc-channel-credentials ch)
+                     :metadata meta
+                     :backend (or (grpc-protocol:grpc-channel-backend ch)
+                                  grpc-protocol:*grpc-backend*))))
+        (lambda ()
+          (grpc-protocol:grpc-stop server))))))
 
 (defun %open-stream (transport method mode metadata)
   (make-instance 'grpc-rpc-stream
